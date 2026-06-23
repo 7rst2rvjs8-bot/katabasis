@@ -45,46 +45,31 @@ function initMotion() {
   })
 
   /* The Doré progression. A single fixed backdrop crossfades through the
-     registers, one per section. Each section claims its register as it reaches
-     centre (entering either direction), so the colour is always correct and
-     transitions are timed dissolves rather than hard cuts. The eventual
-     cinematic clips (Phase 4) slot in over this same backdrop. */
-  const registers = [
-    ['.hero', '--stone-bg'],
-    ['.chapter--threshold', '--stone-bg'],
-    ['.chapter--descent', '--descent-bg'],
-    ['.chapter--nadir', '--nadir-bg'],
-    ['.chapter--return', '--return-bg'],
-    ['.creator', '--close-bg'],
-  ]
+     registers. The crossfade is driven by each chapter's own scroll progress
+     (onUpdate below), NOT by a wall-clock tween, so the background colour and
+     the copy reveal are locked to the same scroll position. That is what keeps
+     a fast flick through a light/dark flip from ever showing copy mid-crossfade
+     against the wrong luminance. The eventual cinematic clips (Phase 4) slot in
+     over this same backdrop. */
   gsap.set(backdrop, { backgroundColor: cssVar('--stone-bg') })
-  registers.forEach(([selector, varName]) => {
-    const el = document.querySelector(selector)
-    if (!el) return
-    const color = cssVar(varName)
-    const toColor = () =>
-      gsap.to(backdrop, {
-        backgroundColor: color,
-        duration: 0.7,
-        ease: 'power1.inOut',
-        overwrite: 'auto',
-      })
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top center',
-      end: 'bottom center',
-      onEnter: toColor,
-      onEnterBack: toColor,
-    })
-  })
 
-  /* Each chapter pins, reveals its copy, holds, then dissolves before release.
-     The copy is only visible while its register is settled, so the background
-     never crossfades under live text. Scrubbed, so it is reversible and tied
-     to scroll position rather than playing on its own. The hold is the gap
-     between the two tweens. */
-  gsap.utils.toArray('main .chapter').forEach((section) => {
+  /* Each chapter: from-register -> to-register as it pins. Order is the descent
+     and return arc. Chapter I holds stone (no change); the flips are entering
+     the descent (II) and the return (IV). */
+  const flow = [
+    ['.chapter--threshold', '--stone-bg', '--stone-bg'],
+    ['.chapter--descent', '--stone-bg', '--descent-bg'],
+    ['.chapter--nadir', '--descent-bg', '--nadir-bg'],
+    ['.chapter--return', '--nadir-bg', '--return-bg'],
+  ]
+  const CROSSFADE = 0.15 // fraction of the pin spent crossfading the ground
+
+  flow.forEach(([selector, fromVar, toVar]) => {
+    const section = document.querySelector(selector)
+    if (!section) return
     const content = section.querySelector('.measure')
+    const tint = gsap.utils.interpolate(cssVar(fromVar), cssVar(toVar))
+
     gsap
       .timeline({
         scrollTrigger: {
@@ -94,8 +79,14 @@ function initMotion() {
           pin: true,
           scrub: true,
           anticipatePin: 1,
+          onUpdate: (self) => {
+            backdrop.style.backgroundColor = tint(Math.min(self.progress / CROSSFADE, 1))
+          },
         },
       })
+      /* Reveal only after the ground has settled (0.18 > CROSSFADE), hold, then
+         dissolve before release. Scrubbed, so it is reversible. The hold is the
+         gap between the two tweens. */
       .fromTo(
         content,
         { autoAlpha: 0, y: 28 },
@@ -105,19 +96,34 @@ function initMotion() {
       .to(content, { autoAlpha: 0, y: -16, ease: 'power2.in', duration: 0.2 }, 0.82)
   })
 
-  /* The creator is the settled close: one quiet reveal, no pin, copy stays. */
-  const creator = document.querySelector('.creator .measure')
-  if (creator) {
-    gsap.fromTo(
-      creator,
-      { autoAlpha: 0, y: 24 },
-      {
-        autoAlpha: 1,
-        y: 0,
-        ease: 'power2.out',
-        duration: 0.9,
-        scrollTrigger: { trigger: '.creator', start: 'top 78%' },
-      },
-    )
+  /* The creator is the settled close. Both it and the return are light grounds,
+     so this transition is not a luminance flip; a quiet timed crossfade and a
+     single reveal are enough. Hidden first so it never flashes before reveal. */
+  gsap.set('.creator .measure', { autoAlpha: 0 })
+  const toClose = () =>
+    gsap.to(backdrop, {
+      backgroundColor: cssVar('--close-bg'),
+      duration: 0.8,
+      ease: 'power1.inOut',
+      overwrite: 'auto',
+    })
+  ScrollTrigger.create({
+    trigger: '.creator',
+    start: 'top 78%',
+    onEnter: () => {
+      toClose()
+      gsap.fromTo(
+        '.creator .measure',
+        { autoAlpha: 0, y: 24 },
+        { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 0.9 },
+      )
+    },
+    onEnterBack: toClose,
+  })
+
+  /* Dev-only handle for headless smoke tests. Stripped from production builds
+     (import.meta.env.DEV is statically false there). */
+  if (import.meta.env.DEV) {
+    window.__kb = { ScrollTrigger, lenis }
   }
 }
