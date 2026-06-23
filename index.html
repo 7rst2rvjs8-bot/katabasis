@@ -2,175 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Katabasis</title>
     <meta
       name="description"
       content="Katabasis treats every trading strategy as noise until cost and luck are ruled out as the explanation."
     />
-    <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#c3bcb0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0a0807" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/src/styles/index.css" />
+    <style>
+      html, body, #root { margin: 0; height: 100%; background: #06050a; overflow: hidden; }
+      #root { position: fixed; inset: 0; }
+      canvas { display: block; touch-action: none; }
+    </style>
   </head>
   <body>
-    <div id="backdrop" aria-hidden="true"></div>
-    <a class="skip-link" href="#main">Skip to content</a>
-
-    <header class="masthead">
-      <h1 class="wordmark">Katabasis</h1>
-    </header>
-
-    <main id="main" tabindex="-1">
-      <section class="hero" aria-labelledby="hero-line">
-        <div class="measure">
-          <p class="hero__line" id="hero-line">
-            Katabasis treats every trading strategy as noise until cost and luck
-            are ruled out as the explanation.
-          </p>
-        </div>
-      </section>
-
-      <section
-        class="chapter chapter--threshold"
-        aria-labelledby="ch1-title"
-      >
-        <div class="measure">
-          <h2 class="chapter__title" id="ch1-title">
-            <span class="chapter__num" aria-hidden="true">I</span>
-            <span class="chapter__name">The Threshold</span>
-          </h2>
-          <div class="chapter__body">
-            <p>
-              Most trading strategies that look profitable are not. A backtest
-              curves upward when a strategy has been picked, out of many, for the
-              slice of history it happens to fit. It holds up because a backtest
-              pays none of the costs of real trading. Neither flaw is visible in
-              the result. Both appear once real capital is at risk.
-            </p>
-            <p>
-              Every candidate arrives looking the same: a clean equity curve and
-              a plausible story. Telling them apart is the entire problem.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section
-        class="chapter chapter--descent"
-        aria-labelledby="ch2-title"
-      >
-        <div class="measure">
-          <h2 class="chapter__title" id="ch2-title">
-            <span class="chapter__num" aria-hidden="true">II</span>
-            <span class="chapter__name">The Descent</span>
-          </h2>
-          <div class="chapter__body">
-            <p>
-              A strategy that looks profitable has to survive the two ways the
-              result itself can mislead.
-            </p>
-            <p>
-              The first is luck. A result can look strong because it was the best
-              of many attempts, not because it found anything real. Katabasis
-              weighs every result against how much searching produced it, and
-              discounts it accordingly. An edge that stands out only because the
-              search was wide does not survive the adjustment.
-            </p>
-            <p>
-              The second is cost. A backtest can look strong because nothing was
-              paid to trade it: not the spread on every entry, not the price the
-              order moves against itself, not the fills that never come. Katabasis
-              subtracts all of it first. Only what is left counts as performance.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="chapter chapter--nadir" aria-labelledby="ch3-title">
-        <div class="measure">
-          <h2 class="chapter__title" id="ch3-title">
-            <span class="chapter__num" aria-hidden="true">III</span>
-            <span class="chapter__name">The Nadir</span>
-          </h2>
-          <div class="chapter__body">
-            <p>The hardest test is set before the results exist.</p>
-            <p>
-              Before a strategy is evaluated, the conditions that would kill it
-              are fixed in advance: what it has to achieve, and what result ends
-              it. Once the results are in, those conditions cannot move. A
-              strategy that fails them is not quietly adjusted until it passes. It
-              is killed.
-            </p>
-            <p>
-              This closes off the most common form of self-deception, the kind
-              that does not feel like deception at all: seeing a weak result and
-              concluding, in good faith, that the strategy you meant to test was
-              slightly different. After the fact, the strategy cannot be
-              redefined.
-            </p>
-            <p>
-              Nothing here is ever proven. A strategy that survives has not been
-              shown to be right. It has only not yet been shown to be wrong, and
-              it is kept on that basis and no other. Later evidence can still end
-              it.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="chapter chapter--return" aria-labelledby="ch4-title">
-        <div class="measure">
-          <h2 class="chapter__title" id="ch4-title">
-            <span class="chapter__num" aria-hidden="true">IV</span>
-            <span class="chapter__name">The Return</span>
-          </h2>
-          <div class="chapter__body">
-            <p>
-              What survives evaluation crosses into live trading. Almost nothing
-              does.
-            </p>
-            <p>
-              The crossing runs one way. A strategy reaches the live system only
-              after meeting every condition set against it, and getting there is
-              not an argument that can be won, only a standard that has been met.
-              A strategy that later fails that standard is removed.
-            </p>
-            <p>
-              Live trading is not the reward at the end of the test. It is the
-              test continuing, now with real money at stake, where costs are no
-              longer modeled but paid, and where a strategy can still be wrong in
-              ways no backtest could reach. The standard that governed evaluation
-              governs it here too. It does not loosen because a strategy made it
-              this far.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="creator" aria-labelledby="creator-name">
-        <div class="measure">
-          <h2 class="creator__name" id="creator-name">Max McCollom</h2>
-          <div class="creator__body">
-            <p>
-              I'm studying financial economics at Columbia University. I started
-              building Katabasis in June 2026.
-            </p>
-            <p>
-              The problem I work on is the one most systematic research avoids:
-              telling a real edge apart from a result that only looks like one.
-              Katabasis is built around that question, end to end. It runs live
-              now, at small size, and most of what it does stays private.
-            </p>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="colophon">
-      <p class="colophon__mark">Katabasis</p>
-    </footer>
-
-    <script type="module" src="/src/scripts/main.js"></script>
+    <div id="root"></div>
+    <noscript>Katabasis is an interactive 3D experience and requires JavaScript.</noscript>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

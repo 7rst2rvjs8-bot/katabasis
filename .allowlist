@@ -23,8 +23,9 @@ file:index.html
 file:public/CNAME
 
 # -- source and assets ------------------------------------------------------
-dir:src/:html css js svg
-dir:public/:svg png jpg jpeg webp avif ico woff2 mp4 webm vtt xml txt
+dir:src/:html css js jsx glsl vert frag json svg
+dir:public/:svg png jpg jpeg webp avif ico woff2 mp4 webm vtt xml txt glb gltf bin hdr ktx2 mp3 ogg wav json
+dir:harness/:js mjs json
 dir:docs/:md
 dir:.github/workflows/:yml
 dir:.githooks/:*

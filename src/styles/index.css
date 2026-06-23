@@ -1,5 +1,0 @@
-/* Katabasis stylesheet entry. Order matters: tokens, then base, then the
-   chapter layout that consumes them. */
-@import "./tokens.css";
-@import "./base.css";
-@import "./chapters.css";
