@@ -19,3 +19,7 @@ CLAUDE.md
 .DS_Store
 *.log
 Thumbs.db
+
+# Throwaway prototypes. Never integrated, never built, never committed. The
+# real build is index.html only; this is a sketch for testing an interaction.
+proto/
