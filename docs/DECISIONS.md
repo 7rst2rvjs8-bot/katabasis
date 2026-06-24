@@ -85,3 +85,78 @@ Abstract/atmospheric only. Frozen copy surfaced verbatim (copy lives in
   the baked hall is wired and demonstrated via `?baked`. Baked-as-universal-
   default needs the Blender candle light-rig tuned for eye-level readability:
   a tuning pass, not a pipeline gap.
+
+## CURRENT ARCHITECTURE & LOCKED DECISIONS (consolidated, authoritative)
+
+This section is the standalone record of the shipped state. Where it and older
+sections above differ, this one wins.
+
+### What it is
+A free-roam 3D estate (supersedes the old scroll site). Two connected zones:
+the entry HALL (Piranesi colonnade) and, down a continuous grand stair, the
+DESCENT (a vertiginous shaft toward true black). Walk it; inspect glowing
+objects; two are minigames. Boundary / frozen copy / safety scaffolding are
+inviolable (see CLAUDE.md sections 1-2; frozen copy lives verbatim in
+`src/copy.js`, checked against CLAUDE.md section 5).
+
+### Stack (locked)
+- React 19 + R3F 9 + three 0.184; @react-three/rapier (physics); @react-three/
+  postprocessing; drei; zustand (state); gsap; Web Audio (synth). Vite build.
+- `leva` is the live-tuning GUI (the R3F-idiomatic equivalent of lil-gui). One
+  logged substitution from the named stack.
+- Rapier interaction layer is code-split (`React.lazy` on `PhysicsWorld`) so the
+  WASM loads behind the arrival veil; initial bundle ~438 KB gzip.
+
+### Rendering (locked: matcap default, baked is a demo)
+- DEFAULT = procedural matcap "rendering illusion" (Bruno Simon technique): no
+  real-time lights. `src/render/estateMaterial.js` = matcap + fake-bounce from
+  candle points + Bruno down-facing-normal indirect tint + procedural tarnish.
+  Atmosphere = film-soft billboarded god-rays + drifting dust + FogExp2.
+  `DepthGrade` deepens fog/exposure toward true black with depth.
+- BAKED-GI hall is a verified `?baked` DEMO, NOT the walked default. It looks
+  better for establishing/dramatic views but reads darker at the visitor's
+  eye-line (directional light at grazing angles). To promote it to default,
+  tune the Blender candle light-rig for eye-level readability (a tuning pass).
+- Treatments via `?treatment=charcoal|gold|ember`; charcoal is default.
+
+### Systems (all real-path verified)
+- First-person free-roam: Rapier kinematic capsule + character controller
+  (slides, no clip), damped dt-independent camera, drag-look, WASD + analog
+  touch joystick (coarse-pointer only) + tap/click-to-inspect.
+- Inspect: proximity prompt -> E or tap -> cinematic draw-in surfacing frozen
+  copy (I-The Threshold in the hall, II-The Descent below). Leaving resumes
+  control (verified in both zones, and that close buttons never re-trigger).
+- Two minigames via a drop-in registry (`src/minigame/registry.js`): the
+  Astrolabe Lock (coupled rings) and the Nine Braziers (lights-out). Both
+  winnable; `?solve` seeds them one move from solved for the harness.
+- Persistence: zustand `persist` -> localStorage; reads + wins survive reload,
+  reflected in-world (steadier glow); an "everything seen" HUD line when all 4.
+- Adaptive quality: `AdaptiveQuality` measures FPS, steps post off -> DPR clamp
+  -> fog/dust thin (hysteresis), recovers. Verified to fire AND recover.
+- Audio: synthesized WebAudio bed that darkens with depth + interaction cues
+  (inspect/solve/close). Placeholder; Howler + authored assets is the upgrade.
+
+### Blender pipeline (OPERATES) + asset handoff contract
+- Blender 5.1.2 headless. PATH fix: `sudo ln -s "/Applications/Blender.app/
+  Contents/MacOS/Blender" /usr/local/bin/blender`. `blender/build_hall.py`
+  generates the colonnade procedurally, lightmap-packs UV2, bakes COMBINED GI +
+  AO in Cycles, exports glb. `gltf-transform` Draco + WebP: 972 KB -> 74 KB.
+  DRACOLoader/KTX2Loader wired (`src/render/loaders.js`, decoders in
+  `public/draco|basis`). Baked hall renders via `?baked`.
+- KTX2 GAP: `toktx` not installed; WebP is the fallback. Fix: `brew install ktx`.
+- HANDOFF: hand-modeled `.glb` files drop into `public/models/` and appear via
+  `<ExternalModel>` (live slot in the hall at [0,0,14]; placeholder verified).
+  The contract is `docs/ASSET_PIPELINE.md`. Coordinates: three is Y-up, hall
+  axis is -Z, floor at y=0.
+
+### Open / deferred (deliberate, not gaps)
+- Max's leva feel values are UNBAKED, pending friends-and-family testing; the
+  sliders stay live. Do not bake or alter them.
+- The descent is the weaker zone (darker, less compositionally resolved).
+- Verification was on the dev server, not the built `dist/` bundle (low risk).
+
+### Verification harnesses (the loop; `harness/`)
+`shoot.mjs` (multi-angle stills, real GPU, ?harness=1 scriptable camera),
+`verify-slice.mjs` (movement/descent/inspects/wins/persistence),
+`journey2.mjs` (orrery launch + resume both zones), `verify-close.mjs`
+(close path stays closed), `verify-hardening.mjs` (FPS degrade + mobile).
