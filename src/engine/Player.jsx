@@ -59,7 +59,9 @@ export default function Player() {
     const el = gl.domElement
     const pd = (e) => {
       drag.current = { on: true, x: e.clientX, y: e.clientY }
-      el.setPointerCapture?.(e.pointerId)
+      try {
+        el.setPointerCapture?.(e.pointerId)
+      } catch {}
     }
     const pm = (e) => {
       if (!drag.current.on) return
