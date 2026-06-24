@@ -29,7 +29,7 @@ async function boot(url) {
   const { browser, page, errors } = await boot('http://localhost:5173/')
   await sleep(3600) // past intro lock
   await page.keyboard.down('KeyW')
-  await sleep(16000) // long walk: through the hall, through the arch, down the grand stair
+  await sleep(24000) // long walk: through the hall, through the arch, down the grand stair, to the balustrade
   await page.keyboard.up('KeyW')
   await sleep(1200)
   const p1 = await page.evaluate(() => window.__kbx.getCam())
@@ -38,7 +38,7 @@ async function boot(url) {
 
   // strafe to the descent lectern and read it
   await page.keyboard.down('KeyA')
-  await sleep(1600)
+  await sleep(1700)
   await page.keyboard.up('KeyA')
   await sleep(500)
   const prompt = await page.evaluate(() => document.querySelector('.kb-prompt')?.innerText?.trim())
