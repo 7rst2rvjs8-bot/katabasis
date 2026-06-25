@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { flutedColumnGeometry, archRingGeometry, radialTexture } from './geometry.js'
-import { getEstateMaterials } from '../render/estateMaterials.js'
+import { getEstateMaterials, makeFloorMaterial } from '../render/estateMaterials.js'
 import { BAYS, COL_X, COL_H, WALL_X, zNear, zFar, len, midZ, CANDLES } from './layout.js'
 import { T } from '../render/treatments.js'
 import { REDUCED } from '../util/env.js'
@@ -74,21 +74,38 @@ export function Candle({ position, intensity = 1 }) {
   )
 }
 
-export default function Hall() {
+export default function Hall({ floorStyle = null, rugVariant = 'rugmax' }) {
   const mat = useEstateMaterials()
+  // floor treatment A/B (?floor=oak|parquet|marble|runner). Default null keeps
+  // the shipped flagstone (mat.floor). A 'runner' is oak planks + a raised
+  // matte-wool runner slab down the centre (real geometry edge), carrying the
+  // procedural Persian/Savonnerie rug pattern (rugVariant: rugmax | rugclean).
+  const floorMat = useMemo(
+    () => (floorStyle ? makeFloorMaterial(floorStyle === 'runner' ? 'oak' : floorStyle) : null),
+    [floorStyle],
+  )
+  const runnerMat = useMemo(() => (floorStyle === 'runner' ? makeFloorMaterial(rugVariant) : null), [floorStyle, rugVariant])
   useFrame((s) => {
     const t = s.clock.elapsedTime
     for (const k in mat) mat[k].userData.uniforms.uTime.value = t
+    if (floorMat) floorMat.userData.uniforms.uTime.value = t
+    if (runnerMat) runnerMat.userData.uniforms.uTime.value = t
   })
   const farArch = useMemo(() => archRingGeometry({ ri: 6.2, ro: 8.2, depth: 2.6 }), [])
   const pendant = useMemo(() => flutedColumnGeometry({ height: 11, radius: 0.6 }), [])
 
   return (
     <group>
-      {/* flagstone floor (ends at the far arch where the descent begins) */}
-      <mesh position={[0, 0, 4.5]} rotation={[-Math.PI / 2, 0, 0]} material={mat.floor}>
+      {/* floor (ends at the far arch where the descent begins) */}
+      <mesh position={[0, 0, 4.5]} rotation={[-Math.PI / 2, 0, 0]} material={floorMat || mat.floor}>
         <planeGeometry args={[2 * WALL_X, 69]} />
       </mesh>
+      {/* centre runner: a thin raised matte-carpet slab (visual only, no collider) */}
+      {runnerMat && (
+        <mesh position={[0, 0.05, 4.5]} material={runnerMat}>
+          <boxGeometry args={[4.0, 0.06, 60]} />
+        </mesh>
+      )}
 
       {/* enclosing outer walls rising into darkness */}
       <mesh position={[-WALL_X, 12, midZ]} material={mat.stone}>

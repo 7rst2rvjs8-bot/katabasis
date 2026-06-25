@@ -148,6 +148,37 @@ inviolable (see CLAUDE.md sections 1-2; frozen copy lives verbatim in
   `<ExternalModel>` (live slot in the hall at [0,0,14]; placeholder verified).
   The contract is `docs/ASSET_PIPELINE.md`. Coordinates: three is Y-up, hall
   axis is -Z, floor at y=0.
+- INTERACTIVE AUTHORING (added): the official Blender Lab MCP add-on (v1.0.0)
+  is wired as the `blender` MCP server for live-API lookup + scene queries over
+  a running GUI Blender (`localhost:9876`). It coexists with the headless
+  production path above; it does not replace it. The standing rules for all
+  Blender model work (version lock, idempotency, the BANNED-PATTERNS list of
+  removed/relocated APIs, the bmesh-vs-GeoNodes rule, the 5-iteration cap, and
+  the PARAMS/sentinel output contract) live in `docs/BLENDER_AGENT.md` — read
+  it before building geometry. Server venv + repo live under
+  `/Users/maxmccollom/tools/blender_mcp` (outside this repo by design).
+
+### Shippable realism ceiling for models (VERIFIED in-hall, LOCKED)
+First production model `procedural/baluster.py` (a parametric turned baluster:
+PARAMS-driven lathe profile of distinct turning elements + angle-limited bevel)
+was proved through the full chain — Cycles bake -> baked glb -> in-hall harness
+screenshots at visitor eye level. The finding governs every model from here:
+- **Shippable procedural realism = FORM + BEVEL GEOMETRY ONLY.** Bevel reads
+  excellently under matcap (beveled normals perturb the matcap lookup); it ships
+  as geometry. That is the whole win.
+- **Baked PBR maps do NOT survive this lighting model.** The scene is matcap /
+  no real-time lights, so a baked normal map washes out (normal maps need
+  directional light this scene lacks) and a baked albedo mottling map is
+  redundant (the estate matcap already applies its own tarnish). Baking ~4x'd
+  the file size for near-zero in-hall gain. **Do not bake albedo/normal for
+  estate models.** More surface life comes from matcap character or real relief
+  geometry for hero objects, never baked maps.
+- **Drop-in recipe:** export form+bevel geometry, drop into `public/models/`,
+  render with `<ExternalModel url=... matcap />`. The matcap path
+  (`estateMaterials.makeModelMatcap`) rebinds the glb's dead PBR material to the
+  estate matcap (`makeEstateMatcap` now accepts optional `map`/`normalMap`).
+  `?model` demos `baluster.glb` in the slot. Full rationale in
+  `docs/BLENDER_AGENT.md`. Allowlist gained `dir:procedural/:py json`.
 
 ### Open / deferred (deliberate, not gaps)
 - Max's leva feel values are UNBAKED, pending friends-and-family testing; the

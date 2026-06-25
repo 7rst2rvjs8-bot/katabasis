@@ -7,7 +7,7 @@ import { playInspect } from '../audio/cues.js'
 import { getEstateMaterials } from '../render/estateMaterials.js'
 import { chapters } from '../copy.js'
 import { radialTexture } from '../world/geometry.js'
-import { DESC_LANDING_Y } from '../world/layout.js'
+import { DESC_LANDING_Y, NADIR_FLOOR_Y, DEST_FLOOR_Y, ENABLE_NADIR_RETURN, RETURN_OPEN } from '../world/layout.js'
 
 const tmpFrom = new THREE.Vector3()
 
@@ -30,7 +30,26 @@ const LIST = [
     focus: { from: [-6, DESC_LANDING_Y + 1.6, DZ + 3.2], to: [-6, DESC_LANDING_Y + 1.0, DZ] }, payload: ch(1),
   },
   { id: 'brazier', model: 'brazier', kind: 'game', pos: [6, DESC_LANDING_Y, DZ], prompt: 'Tend the braziers', gameId: 'braziers' },
-]
+  // nadir (Chapter III): forward in the chamber, so the back stays black to the doorway
+  {
+    id: 'lectern3', model: 'lectern', kind: 'read', pos: [-3, NADIR_FLOOR_Y, -85], prompt: 'Read the inscription',
+    focus: { from: [-3, NADIR_FLOOR_Y + 1.5, -82], to: [-3, NADIR_FLOOR_Y + 1.0, -85] }, payload: ch(2),
+  },
+  // return destination (Chapter IV): pale, in the arrival landing; the single
+  // amber-gold glow stays back at the threshold, so this lectern carries no glow
+  {
+    id: 'lectern4', model: 'lectern', kind: 'read', pos: [0, DEST_FLOOR_Y, -114], prompt: 'Read the inscription', pale: true, glow: false,
+    focus: { from: [0, DEST_FLOOR_Y + 1.5, -111], to: [0, DEST_FLOOR_Y + 1.0, -114] }, payload: ch(3),
+  },
+  // Nadir/Return inspectables are experiment-only (?arc=nadir): lectern3 (Chapter III)
+  // lives in the Nadir; lectern4 (Chapter IV) lives in the walkable Return room and
+  // also needs RETURN_OPEN. In the default route neither renders. Hall + descent
+  // inspectables are always present.
+].filter((it) => {
+  if (it.id === 'lectern3') return ENABLE_NADIR_RETURN
+  if (it.id === 'lectern4') return ENABLE_NADIR_RETURN && RETURN_OPEN
+  return true
+})
 
 function GlowMark({ on, done, y = 1.4 }) {
   const ref = useRef()
@@ -56,13 +75,13 @@ function Model({ item, near, mat, done }) {
   if (item.model === 'lectern') {
     return (
       <group position={item.pos}>
-        <mesh position={[0, 0.55, 0]} material={mat.stone}>
+        <mesh position={[0, 0.55, 0]} material={item.pale ? mat.pale : mat.stone}>
           <boxGeometry args={[1.1, 1.1, 1.1]} />
         </mesh>
-        <mesh position={[0, 1.25, 0]} rotation={[-0.5, 0, 0]} material={mat.brass}>
+        <mesh position={[0, 1.25, 0]} rotation={[-0.5, 0, 0]} material={item.pale ? mat.pale : mat.brass}>
           <boxGeometry args={[1.3, 0.12, 0.9]} />
         </mesh>
-        <GlowMark on={near} done={done} />
+        {item.glow !== false && <GlowMark on={near} done={done} />}
       </group>
     )
   }

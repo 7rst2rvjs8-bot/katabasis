@@ -27,6 +27,7 @@ dir:src/:html css js jsx glsl vert frag json svg
 dir:public/:svg png jpg jpeg webp avif ico woff2 mp4 webm vtt xml txt glb gltf bin hdr ktx2 mp3 ogg wav json js wasm
 dir:harness/:js mjs json
 dir:blender/:py json
+dir:procedural/:py json
 dir:docs/:md
 dir:.github/workflows/:yml
 dir:.githooks/:*

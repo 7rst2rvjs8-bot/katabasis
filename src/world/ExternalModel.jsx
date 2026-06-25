@@ -1,7 +1,9 @@
-import React, { Suspense } from 'react'
+import React, { Suspense, useMemo } from 'react'
+import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import { DRACO_PATH, getKTX2, setRenderer } from '../render/loaders.js'
+import { makeModelMatcap } from '../render/estateMaterials.js'
 
 // ExternalModel: the drop-in slot for a hand-modeled Blender .glb.
 // ---------------------------------------------------------------------------
@@ -44,7 +46,7 @@ class ModelBoundary extends React.Component {
   }
 }
 
-function Model({ url, position, rotation, scale }) {
+function Model({ url, position, rotation, scale, matcap, normalScale }) {
   // Ensure the KTX2 transcoder knows the GPU target before any textured glb is
   // decoded. Idempotent; safe to run on every mount.
   const gl = useThree((s) => s.gl)
@@ -59,7 +61,24 @@ function Model({ url, position, rotation, scale }) {
     (loader) => loader.setKTX2Loader(getKTX2()),
   )
 
-  return <primitive object={scene} position={position} rotation={rotation} scale={scale} />
+  // matcap path (opt-in): a glb's own glTF material is PBR, which renders BLACK
+  // in this lightless matcap scene. Rebind each mesh to the estate matcap,
+  // carrying the glb's baked colour/normal maps so mottling + relief read. The
+  // source scene is shared (drei cache), so clone and only assign on the clone.
+  const obj = useMemo(() => {
+    if (!matcap) return scene
+    const root = scene.clone(true)
+    const ns = normalScale != null ? new THREE.Vector2(normalScale, normalScale) : null
+    root.traverse((c) => {
+      if (c.isMesh) {
+        const src = c.material || {}
+        c.material = makeModelMatcap({ map: src.map || null, normalMap: src.normalMap || null, normalScale: ns })
+      }
+    })
+    return root
+  }, [scene, matcap, normalScale])
+
+  return <primitive object={obj} position={position} rotation={rotation} scale={scale} />
 }
 
 export default function ExternalModel({
@@ -67,6 +86,8 @@ export default function ExternalModel({
   position = [0, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
+  matcap = false,
+  normalScale = 1,
 }) {
   // ErrorBoundary OUTSIDE Suspense: Suspense re-throws once the rejected loader
   // promise settles, and only the boundary can catch that throw. key={url} so a
@@ -74,7 +95,7 @@ export default function ExternalModel({
   return (
     <ModelBoundary key={url} url={url}>
       <Suspense fallback={null}>
-        <Model url={url} position={position} rotation={rotation} scale={scale} />
+        <Model url={url} position={position} rotation={rotation} scale={scale} matcap={matcap} normalScale={normalScale} />
       </Suspense>
     </ModelBoundary>
   )
