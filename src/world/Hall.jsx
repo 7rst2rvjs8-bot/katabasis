@@ -1,15 +1,16 @@
-import React, { useMemo, useRef } from 'react'
-import * as THREE from 'three'
+import React, { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { flutedColumnGeometry, archRingGeometry, radialTexture } from './geometry.js'
 import { getEstateMaterials, makeFloorMaterial } from '../render/estateMaterials.js'
 import { BAYS, COL_X, COL_H, WALL_X, zNear, zFar, len, midZ, CANDLES } from './layout.js'
 import { T } from '../render/treatments.js'
-import { REDUCED } from '../util/env.js'
+import { Candle, Sconce } from './detailKit.jsx'
 
-const FLICK = REDUCED ? 0.25 : 1 // dampen sway/flicker under reduced-motion
 const SPRING = COL_H // arches spring from the column tops
 export { CANDLES }
+// Candle now lives in the detail kit; re-export so existing callers (Descent, Nadir)
+// keep importing it from Hall unchanged.
+export { Candle }
 
 export function useEstateMaterials() {
   return getEstateMaterials()
@@ -19,12 +20,31 @@ function Column({ x, z, mat }) {
   const shaft = useMemo(() => flutedColumnGeometry({ height: COL_H, radius: 0.7 }), [])
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.45, 0]} material={mat.stone} castShadow>
-        <boxGeometry args={[2.2, 0.9, 2.2]} />
+      {/* stepped base: wide plinth -> die -> chamfer step where the shaft springs */}
+      <mesh position={[0, 0.18, 0]} material={mat.stone} castShadow>
+        <boxGeometry args={[2.7, 0.36, 2.7]} />
       </mesh>
+      <mesh position={[0, 0.62, 0]} material={mat.stone}>
+        <boxGeometry args={[2.2, 0.6, 2.2]} />
+      </mesh>
+      <mesh position={[0, 1.02, 0]} material={mat.stone}>
+        <boxGeometry args={[1.8, 0.28, 1.8]} />
+      </mesh>
+      {/* brass astragal ring at the shaft foot (small detail) */}
+      <mesh position={[0, 1.22, 0]} material={mat.brass}>
+        <cylinderGeometry args={[0.74, 0.74, 0.1, 20]} />
+      </mesh>
+      {/* fluted shaft */}
       <mesh position={[0, COL_H / 2 + 0.6, 0]} geometry={shaft} material={mat.stone} />
-      <mesh position={[0, COL_H + 0.35, 0]} material={mat.gilt}>
-        <boxGeometry args={[2.0, 0.9, 2.0]} />
+      {/* capital: brass necking ring -> gilt bell -> abacus slab */}
+      <mesh position={[0, COL_H - 0.1, 0]} material={mat.brass}>
+        <cylinderGeometry args={[0.7, 0.66, 0.16, 20]} />
+      </mesh>
+      <mesh position={[0, COL_H + 0.3, 0]} material={mat.gilt}>
+        <boxGeometry args={[1.9, 0.8, 1.9]} />
+      </mesh>
+      <mesh position={[0, COL_H + 0.85, 0]} material={mat.gilt}>
+        <boxGeometry args={[2.25, 0.3, 2.25]} />
       </mesh>
       {/* baked shadow disc under the column */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -43,35 +63,6 @@ function ShadowMat() {
 function TransverseArch({ z, mat }) {
   const geo = useMemo(() => archRingGeometry({ ri: COL_X - 0.2, ro: COL_X + 1.0, depth: 1.8 }), [])
   return <mesh position={[0, SPRING + 0.8, z]} geometry={geo} material={mat.stone} />
-}
-
-export function Candle({ position, intensity = 1 }) {
-  const ref = useRef()
-  const core = useRef()
-  const tex = useMemo(() => radialTexture({ inner: 'rgba(255,196,120,1)', outer: 'rgba(255,150,60,0)' }), [])
-  const ctex = useMemo(() => radialTexture({ inner: 'rgba(255,240,210,1)', outer: 'rgba(255,200,120,0)' }), [])
-  useFrame((s) => {
-    const t = s.clock.elapsedTime
-    const f = 0.82 + FLICK * (0.14 * Math.sin(t * 9 + position[0] * 3) + 0.06 * Math.sin(t * 23.3 + position[2]))
-    if (ref.current) {
-      ref.current.scale.setScalar(3.0 * f * (0.6 + 0.4 * intensity))
-      ref.current.material.opacity = 0.85 * f * intensity
-    }
-    if (core.current) {
-      core.current.scale.setScalar(0.7 * f)
-      core.current.material.opacity = f * intensity
-    }
-  })
-  return (
-    <group position={position}>
-      <sprite ref={ref}>
-        <spriteMaterial map={tex} color={'#ffce86'} blending={THREE.AdditiveBlending} transparent depthWrite={false} />
-      </sprite>
-      <sprite ref={core}>
-        <spriteMaterial map={ctex} color={'#fff2d6'} blending={THREE.AdditiveBlending} transparent depthWrite={false} />
-      </sprite>
-    </group>
-  )
 }
 
 export default function Hall({ floorStyle = null, rugVariant = 'rugmax' }) {
@@ -136,13 +127,21 @@ export default function Hall({ floorStyle = null, rugVariant = 'rugmax' }) {
         </group>
       ))}
 
-      {/* entablature beams along both colonnades */}
-      <mesh position={[-COL_X, COL_H + 1.0, midZ]} material={mat.stone}>
-        <boxGeometry args={[2.4, 1.4, len]} />
-      </mesh>
-      <mesh position={[COL_X, COL_H + 1.0, midZ]} material={mat.stone}>
-        <boxGeometry args={[2.4, 1.4, len]} />
-      </mesh>
+      {/* entablature beams + a bed molding below and a projecting cornice course
+          above, so a horizontal trim rhythm reads along the colonnade tops */}
+      {[-COL_X, COL_X].map((cx, i) => (
+        <group key={'ent' + i}>
+          <mesh position={[cx, COL_H + 1.0, midZ]} material={mat.stone}>
+            <boxGeometry args={[2.4, 1.4, len]} />
+          </mesh>
+          <mesh position={[cx, COL_H + 0.25, midZ]} material={mat.stone}>
+            <boxGeometry args={[2.7, 0.18, len]} />
+          </mesh>
+          <mesh position={[cx, COL_H + 1.85, midZ]} material={mat.stone}>
+            <boxGeometry args={[2.9, 0.3, len]} />
+          </mesh>
+        </group>
+      ))}
 
       {/* grand far archway framing the descent into Zone II */}
       <mesh position={[0, 0.5, zFar - 4]} geometry={farArch} material={mat.brass} />
@@ -166,9 +165,11 @@ export default function Hall({ floorStyle = null, rugVariant = 'rugmax' }) {
         <mesh key={'pend' + i} geometry={pendant} material={mat.stone} position={p} rotation={[Math.PI, 0, 0]} />
       ))}
 
-      {/* candlelight along the colonnade (same points the bounce shader reads) */}
+      {/* candlelight along the colonnade, now mounted as column sconces (bracket +
+          gilt cup) so each flame reads as a fixture, not a floating orb. Same points
+          the bounce shader reads. The sconce mounts toward the column (outward). */}
       {CANDLES.map((p, i) => (
-        <Candle key={'c' + i} position={p} />
+        <Sconce key={'c' + i} position={p} side={Math.sign(p[0])} />
       ))}
     </group>
   )

@@ -79,6 +79,9 @@ const SHOTS = {
   landing: [0, -9, -50, 0, -12, -62],
   arrival: [0, -10.4, -61.5, 0, -14, -90],
   shaft: [-4, -10.5, -61, 3, -34, -82],
+  // the final view: a half-step back at eye level, the monumental balustrade
+  // framing the impossible void as a deliberate overlook (unresolved ending)
+  overlook: [0, -10.4, -58.6, 0, -18, -86],
   detail: [11, 4.5, 28, 0, 6, 22],
   // handoff-slot model at [0,0,14], at visitor eye level and distance
   modelView: [1.3, 1.55, 16.8, 0, 1.0, 14],

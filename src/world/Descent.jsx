@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, Suspense } from 'react'
 import * as THREE from 'three'
 import { getEstateMaterials } from '../render/estateMaterials.js'
-import { Candle } from './Hall.jsx'
+import { HangingLantern, BalusterRail, AssetBoundary } from './detailKit.jsx'
 import { flutedColumnGeometry, archRingGeometry } from './geometry.js'
 import {
   DESC_TOP_Z,
@@ -16,6 +16,7 @@ import {
   DESCENT_CANDLES,
   NADIR_FLOOR_Y,
   ENABLE_NADIR_RETURN,
+  RAILS_BOXES,
 } from './layout.js'
 
 // Zone II: a continuous descent into a vertiginous, impossible shaft falling to
@@ -29,12 +30,22 @@ export default function Descent() {
 
   return (
     <group>
-      {/* grand descent stair, hall floor -> landing */}
-      {Array.from({ length: DESC_STEPS }).map((_, i) => (
-        <mesh key={'st' + i} position={[0, -(i + 0.5) * RISE, DESC_TOP_Z - (i + 0.5) * RUN]} material={mat.stone}>
-          <boxGeometry args={[12, RISE, RUN + 0.03]} />
-        </mesh>
-      ))}
+      {/* grand descent stair, hall floor -> landing, with a thin brass nosing on each
+          tread front so the steps read as a crisp counted rhythm (a warm edge glint) */}
+      {Array.from({ length: DESC_STEPS }).map((_, i) => {
+        const y = -(i + 0.5) * RISE
+        const z = DESC_TOP_Z - (i + 0.5) * RUN
+        return (
+          <group key={'st' + i}>
+            <mesh position={[0, y, z]} material={mat.stone}>
+              <boxGeometry args={[12, RISE, RUN + 0.03]} />
+            </mesh>
+            <mesh position={[0, y + RISE / 2 - 0.05, z + (RUN + 0.03) / 2]} material={mat.brass}>
+              <boxGeometry args={[12, 0.07, 0.1]} />
+            </mesh>
+          </group>
+        )
+      })}
       {/* stair cheeks */}
       {[-6.4, 6.4].map((x, i) => (
         <mesh key={'ch' + i} position={[x, -6.2, (DESC_TOP_Z + STAIR_BOTTOM_Z) / 2]} rotation={[Math.atan2(RISE, RUN), 0, 0]} material={mat.stone}>
@@ -50,9 +61,58 @@ export default function Descent() {
           the void's edge (the strong, unresolved-depth ending). ARC: split to leave
           an offset-right opening where the stair down to the Nadir begins. */}
       {!ENABLE_NADIR_RETURN ? (
-        <mesh position={[0, DESC_LANDING_Y + 0.6, BALCONY_Z]} material={mat.brass}>
-          <boxGeometry args={[2 * DESC_WALL_X, 1.2, 0.6]} />
-        </mesh>
+        // DEFAULT: a monumental balustrade reading as a deliberate overlook over the
+        // void - stone base course + a baluster rhythm silhouetted against the shaft
+        // + a brass cap-rail glint + tall stone newels flanking the edge. All sits on
+        // the existing solid balustrade collider line (z=BALCONY_Z), so the player is
+        // stopped exactly as before and walkability is unchanged.
+        <group>
+          <mesh position={[0, DESC_LANDING_Y + 0.25, BALCONY_Z]} material={mat.stone}>
+            <boxGeometry args={[2 * DESC_WALL_X, 0.5, 0.7]} />
+          </mesh>
+          {(() => {
+            // box rail: the old primitive balusters, kept as the ?rails=boxes
+            // rollback AND as the graceful fallback if the glb ever fails to load
+            const boxRail = Array.from({ length: 15 }).map((_, i) => (
+              <mesh key={'bal' + i} position={[-9.8 + i * 1.4, DESC_LANDING_Y + 0.78, BALCONY_Z]} material={mat.stone}>
+                <boxGeometry args={[0.24, 1.05, 0.42]} />
+              </mesh>
+            ))
+            if (RAILS_BOXES) return boxRail
+            // DEFAULT: the real turned baluster.glb rail (one cached fetch, instanced)
+            return (
+              <AssetBoundary fallback={boxRail}>
+                <Suspense fallback={null}>
+                  <BalusterRail url="/models/baluster.glb" count={15} x0={-9.8} dx={1.4} y={DESC_LANDING_Y + 0.255} z={BALCONY_Z} scale={1.05} />
+                </Suspense>
+              </AssetBoundary>
+            )
+          })()}
+          {/* brass sub-rail tying the balusters under the cap (a warm horizontal line) */}
+          <mesh position={[0, DESC_LANDING_Y + 1.06, BALCONY_Z]} material={mat.brass}>
+            <boxGeometry args={[2 * DESC_WALL_X, 0.1, 0.5]} />
+          </mesh>
+          <mesh position={[0, DESC_LANDING_Y + 1.35, BALCONY_Z]} material={mat.brass}>
+            <boxGeometry args={[2 * DESC_WALL_X + 0.2, 0.32, 0.95]} />
+          </mesh>
+          {[-10.5, 10.5].map((x, i) => (
+            <group key={'newel' + i}>
+              <mesh position={[x, DESC_LANDING_Y + 1.4, BALCONY_Z]} material={mat.stone}>
+                <boxGeometry args={[1.0, 4.0, 1.0]} />
+              </mesh>
+              <mesh position={[x, DESC_LANDING_Y + 3.5, BALCONY_Z]} material={mat.brass}>
+                <boxGeometry args={[1.2, 0.34, 1.2]} />
+              </mesh>
+              {/* gilt finial stepping the newel to a point (authored cap, not a box) */}
+              <mesh position={[x, DESC_LANDING_Y + 3.85, BALCONY_Z]} material={mat.gilt}>
+                <boxGeometry args={[0.62, 0.42, 0.62]} />
+              </mesh>
+              <mesh position={[x, DESC_LANDING_Y + 4.18, BALCONY_Z]} material={mat.gilt}>
+                <boxGeometry args={[0.28, 0.28, 0.28]} />
+              </mesh>
+            </group>
+          ))}
+        </group>
       ) : (
         <>
           <mesh position={[-4.5, DESC_LANDING_Y + 0.6, BALCONY_Z]} material={mat.brass}>
@@ -133,9 +193,10 @@ export default function Descent() {
         </mesh>
       ))}
 
-      {/* dim candles of the descent (colder, sparser than the hall) */}
+      {/* dim flames of the descent, now hung as lanterns from rods climbing into the
+          dark above, so each reads as a fixture suspended in the void (not an orb) */}
       {DESCENT_CANDLES.map((p, i) => (
-        <Candle key={'dc' + i} position={p} intensity={0.3} />
+        <HangingLantern key={'dc' + i} position={p} intensity={0.3} drop={5} />
       ))}
     </group>
   )

@@ -71,6 +71,18 @@ export const ENABLE_NADIR_RETURN = (() => {
   }
 })()
 
+// RAIL FLAG. The real turned baluster.glb is now the DEFAULT landing rail (it reads
+// far better than the old primitive boxes; see docs/ART_REFERENCE_AUDIT.md). The
+// glb only loads on the default Hall->Descent route (not in ?arc=nadir, which uses
+// the split brass balustrade). ?rails=boxes forces the old box rail (rollback/debug).
+export const RAILS_BOXES = (() => {
+  try {
+    return new URLSearchParams(window.location.search).get('rails') === 'boxes'
+  } catch {
+    return false
+  }
+})()
+
 // CONTAINMENT FLAG (sub-flag of the arc above; only meaningful when the arc is on).
 // The walkable pale Return room (rising passage + destination)
 // read as primitive white-box blockout and was rejected. It is PRESERVED in the
