@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node -e \"require('node:fs').copyFileSync('dist/index.html','dist/404.html')\"",
     "preview": "vite preview",
     "check:allowlist": "sh .githooks/allowlist-check.sh",
     "check:telemetry": "node tools/validate-public-telemetry.mjs",
