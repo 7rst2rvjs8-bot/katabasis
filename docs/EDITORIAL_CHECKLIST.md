@@ -22,6 +22,28 @@ ambiguity is resolved by withholding and asking Max, never by guessing.
 - [ ] No quantified attrition. Kill rate, candidate counts, and throughput are
       shown qualitatively only ("most do not survive"), never as a number.
 
+## Cockpit telemetry publication
+
+- [ ] Public static site assets are assumed public. Anything shipped in `public/`,
+      `src/`, `dist/`, or another static asset path is safe to expose to anyone.
+- [ ] No client-side login or render gate is treated as protection for static
+      JSON. Real telemetry requires private authenticated server-side
+      authorization before bytes are returned.
+- [ ] Redaction removes fields from exported payloads. It never means hiding,
+      blurring, masking, or omitting data only in the DOM/UI after the browser has
+      received it.
+- [ ] Demo or synthetic telemetry is visibly labeled on the panel itself, not
+      buried in copy, provenance, comments, or filenames.
+- [ ] Public aggregates are irreversible and do not reveal withheld quantities,
+      including universe size, kill-rate, candidate counts, throughput, or other
+      reconstructable private values.
+- [ ] Public static export contains no real P/L, trade rows, watchlists, contract
+      inputs, strategy identities, parameter weights, thresholds, trigger logic,
+      live execution flags, kill-rates, candidate counts, or reconstructable
+      private values.
+- [ ] Every future cockpit panel declares exactly one state: `READY`, `PARTIAL`,
+      `MISSING`, `GATED`, `PROPRIETARY_REDACTED`, or `DEMO_SYNTHETIC`.
+
 ## Assets
 
 - [ ] No raw screenshots of the live system.
